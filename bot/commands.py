@@ -407,7 +407,7 @@ class CommandHandler:
             "/info - 查看用户信息（私聊查看自己的，群里可回复他人）\n"
             "/select_line - 选择线路\n"
             "/reset_emby_password - 重置Emby账号密码\n"
-            "/count - 查看服务器内片子数量\n"
+            "/count - 查看服务器内影片数量\n"
             "/help - 显示本帮助\n"
         )
         if await self.user_service.is_admin(message.from_user.id):
