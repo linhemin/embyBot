@@ -78,12 +78,12 @@ class User(BaseOrmTableWithTS):
             raise Exception("该用户的 Emby 账号当前未被禁用，无需解禁。")
 
     def check_set_emby_config(self) -> None:
-        """检查是否可修改 Emby 全局配置（仅管理员可操作）。"""
+        """检查是否可修改 Emby 全局配置（仅管理员可操作）"""
         if not self.is_bot_admin():
             raise Exception("您没有管理员权限，无法修改 Emby 全局配置。")
 
     def is_bot_admin(self) -> bool:
-        """判断当前用户是否是 Bot 管理员（由 config.admin_list 控制）。"""
+        """判断当前用户是否是 Bot 管理员（由 config.admin_list 控制）"""
         return self.telegram_id in config.admin_list
 
     def has_emby_account(self) -> bool:
@@ -91,7 +91,7 @@ class User(BaseOrmTableWithTS):
         return self.emby_id is not None
 
     def is_emby_baned(self) -> bool:
-        """判断当前 Emby 账号是否已被禁用（ban_time > 0）。"""
+        """判断当前 Emby 账号是否已被禁用（ban_time > 0)"""
         return self.ban_time and self.ban_time > 0
 
     def emby_ban_info(self) -> tuple[int, str]:
