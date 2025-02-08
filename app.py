@@ -3,6 +3,8 @@ from datetime import datetime
 
 import pytz
 from py_tools.connections.db.mysql import DBManager, BaseOrmTable, SQLAlchemyManager
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import create_async_engine
 
 from bot.bot_client import BotClient
 from bot.commands import CommandHandler
@@ -12,8 +14,21 @@ from services import UserService
 
 
 async def main():
+    async def create_database_if_not_exists():
+        # 创建一个不指定数据库名称的引擎
+        engine_without_db = create_async_engine(
+            f"mysql+asyncmy://{config.db_user}:{config.db_pass}@{config.db_host}:{config.db_port}/",
+            echo=True,
+        )
+        async with engine_without_db.begin() as conn:
+            # 执行创建数据库的语句
+            await conn.execute(text(f"CREATE DATABASE IF NOT EXISTS {config.db_name}"))
+        await engine_without_db.dispose()
+
     # 创建数据库
     async def _init_db():
+        await create_database_if_not_exists()
+
         db_client = SQLAlchemyManager(
             host=config.db_host,
             port=config.db_port,

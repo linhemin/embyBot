@@ -1,9 +1,11 @@
 import logging
+import re
 import string
 from datetime import datetime
 from random import sample
 
 import shortuuid
+from sqlalchemy import select
 
 from config import config
 from core.emby_api import EmbyApi, EmbyRouterAPI
@@ -215,25 +217,36 @@ class UserService:
         """
         使用邀请码，分为普通注册邀请码和白名单邀请码。
         """
+        pattern = re.compile(r'^(epr|epw)-[A-Za-z0-9]+$')
+        if not pattern.match(code):
+            raise Exception("邀请码格式不正确。")
+
         user = await self.must_get_user(telegram_id)
-        valid_code = await InviteCodeOrm().query_one(
-            conds=[InviteCode.code == code, InviteCode.is_used == False]
-        )
-        if not valid_code:
-            raise Exception("该邀请码无效或已被使用。")
 
-        if valid_code.code_type == InviteCodeType.REGISTER:
-            user.check_use_redeem_code()
-        elif valid_code.code_type == InviteCodeType.WHITELIST:
-            user.check_use_whitelist_code()
-            if user.is_emby_baned():
-                await self.emby_unban(telegram_id)
-
+        # 使用事务块，并通过行锁防止并发问题
         async with InviteCodeOrm().transaction() as session:
+            # 构造 SELECT 语句，并加上 FOR UPDATE 行锁
+            stmt = select(InviteCode).where(InviteCode.code == code).with_for_update()
+            result = await session.execute(stmt)
+            valid_code = result.scalars().first()
+
+            if not valid_code or valid_code.is_used:
+                raise Exception("该邀请码无效或已被使用。")
+
+            # 根据邀请码类型执行不同的业务逻辑校验
+            if valid_code.code_type == InviteCodeType.REGISTER:
+                user.check_use_redeem_code()
+            elif valid_code.code_type == InviteCodeType.WHITELIST:
+                user.check_use_whitelist_code()
+                if user.is_emby_baned():
+                    await self.emby_unban(telegram_id)
+
+            # 标记邀请码已使用，并记录使用时间和使用者
             valid_code.is_used = True
             valid_code.used_time = datetime.now().timestamp()
             valid_code.used_user_id = telegram_id
 
+            # 根据邀请码类型更新用户状态
             if valid_code.code_type == InviteCodeType.REGISTER:
                 user.enable_register = True
             elif valid_code.code_type == InviteCodeType.WHITELIST:
@@ -242,6 +255,7 @@ class UserService:
             session.add(valid_code)
             session.add(user)
             await session.commit()
+
         return valid_code
 
     async def reset_password(self, telegram_id: int, password: str = '') -> bool:
