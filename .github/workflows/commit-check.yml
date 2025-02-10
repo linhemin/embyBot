@@ -1,0 +1,55 @@
+name: Git Commit Angular Style Check
+
+on:
+  pull_request:
+    types: [ opened, synchronize, reopened ]
+
+jobs:
+  commit-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout 喵喵代码
+        uses: actions/checkout@v2
+
+      - name: 获取提交信息
+        id: get_commits
+        run: |
+          echo "喵～ 正在获取提交信息呢～"
+          git fetch --no-tags origin ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }}
+          COMMITS=$(git log --pretty=format:"%s" ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }})
+          echo "找到以下提交："
+          echo "$COMMITS"
+          echo "::set-output name=messages::$COMMITS"
+
+      - name: 检查提交信息是否符合 Angular 规范
+        id: check_commits
+        continue-on-error: true
+        run: |
+          echo "喵～ 开始检查提交信息啦～"
+          PATTERN='^(feat|fix|docs|style|refactor|perf|test|chore|ci)(\([a-zA-Z0-9\-]+\))?: .+'
+          FAIL=0
+          while IFS= read -r line; do
+            if [[ ! $line =~ $PATTERN ]]; then
+              echo "❌ 无效的提交信息： $line"
+              FAIL=1
+            fi
+          done <<< "${{ steps.get_commits.outputs.messages }}"
+          if [ $FAIL -eq 1 ]; then
+            echo "::set-output name=result::fail"
+            exit 1
+          else
+            echo "::set-output name=result::pass"
+          fi
+
+      - name: 如果提交不符合规范，则自动关闭 PR
+        if: steps.check_commits.outputs.result == 'fail'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "喵～ 检测到有无效的提交信息，正在关闭该 PR 呀～"
+          PR_NUMBER=${{ github.event.pull_request.number }}
+          curl -X PATCH \
+            -H "Authorization: token $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/${{ github.repository }}/pulls/$PR_NUMBER \
+            -d '{"state": "closed"}'
