@@ -37,7 +37,9 @@ async def main():
         )
         async with engine_without_db.begin() as conn:
             # 执行创建数据库的语句
-            await conn.execute(text(f"CREATE DATABASE IF NOT EXISTS {config.db_name}"))
+            query = f"CREATE DATABASE IF NOT EXISTS {config.db_name}"
+            logger.info(f"SQL Query: {query}, Context: Creating database")
+            await conn.execute(text(query))
         await engine_without_db.dispose()
 
     # 创建数据库
@@ -54,6 +56,8 @@ async def main():
         db_client.init_mysql_engine()
         DBManager.init_db_client(db_client)
         async with DBManager.connection() as conn:
+            query = str(BaseOrmTable.metadata.create_all(bind=conn.engine))
+            logger.info(f"SQL Query: {query}, Context: Creating tables")
             await conn.run_sync(BaseOrmTable.metadata.create_all)
 
 
