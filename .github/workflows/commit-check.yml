@@ -19,7 +19,7 @@ jobs:
           COMMITS=$(git log --pretty=format:"%s" ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }})
           echo "找到以下提交："
           echo "$COMMITS"
-          echo "::set-output name=messages::$COMMITS"
+          echo "messages=$COMMITS" >> $GITHUB_OUTPUT
 
       - name: 检查提交信息是否符合 Angular 规范
         id: check_commits
