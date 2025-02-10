@@ -1,5 +1,6 @@
 import asyncio
 from datetime import datetime
+import logging
 
 import pytz
 from py_tools.connections.db.mysql import DBManager, BaseOrmTable, SQLAlchemyManager
@@ -12,8 +13,22 @@ from config import config
 from core.emby_api import EmbyApi, EmbyRouterAPI
 from services import UserService
 
+# Initialize logger
+logger = logging.getLogger(__name__)
+
 
 async def main():
+
+    def _init_logger():
+        logging.basicConfig(
+            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S",
+            level=config.log_level,
+            filename="default.log",
+        )
+
+    _init_logger()
+
     async def create_database_if_not_exists():
         # 创建一个不指定数据库名称的引擎
         engine_without_db = create_async_engine(
@@ -41,23 +56,16 @@ async def main():
         async with DBManager.connection() as conn:
             await conn.run_sync(BaseOrmTable.metadata.create_all)
 
-    def _init_logger():
-        import logging
-        logging.basicConfig(
-            format="%(levelname)s [%(asctime)s] %(name)s - %(message)s",
-            datefmt="%Y-%m-%d %H:%M:%S",
-            level=config.log_level,
-            filename="default.log",
-        )
+
 
     def _init_tz():
         if config.timezone:
             pytz.timezone(config.timezone)
-            print(f"Timezone: {config.timezone}")
+            logger.info(f"Timezone: {config.timezone}")
 
-    print(datetime.now())
+    logger.info(datetime.now())
     _init_tz()
-    _init_logger()
+    # _init_logger()
     await _init_db()
 
     # 创建Bot客户端
@@ -91,10 +99,16 @@ async def main():
         await bot_client.idle()
 
     except Exception as e:
-        print(f"Failed to start bot: {e}")
+        logger.error(f"Failed to start bot: {e}", exc_info=True)
         await bot_client.stop()
         return
 
 
 if __name__ == "__main__":
     asyncio.run(main())
+    logger.info("bot stop")
+    # _init_logger()
+    # logging.info("Bot is running...")
+    # _init_db()
+    # loop = asyncio.get_event_loop()
+    # loop.run_until_complete(main())
