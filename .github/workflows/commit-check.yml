@@ -8,13 +8,13 @@ jobs:
   commit-check:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout 喵喵代码
+      - name: Checkout 代码
         uses: actions/checkout@v2
 
       - name: 获取提交信息
         id: get_commits
         run: |
-          echo "喵～ 正在获取提交信息呢～"
+          echo "正在获取提交信息"
           git fetch --no-tags origin ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }}
           COMMITS=$(git log --pretty=format:"%s" ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }})
           echo "找到以下提交："
@@ -25,7 +25,7 @@ jobs:
         id: check_commits
         continue-on-error: true
         run: |
-          echo "喵～ 开始检查提交信息啦～"
+          echo "开始检查提交信息"
           PATTERN='^(feat|fix|docs|style|refactor|perf|test|chore|ci)(\([a-zA-Z0-9\-]+\))?: .+'
           FAIL=0
           while IFS= read -r line; do
@@ -46,7 +46,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "喵～ 检测到有无效的提交信息，正在关闭该 PR 呀～"
+          echo "检测到有无效的提交信息，正在关闭该 PR"
           PR_NUMBER=${{ github.event.pull_request.number }}
           curl -X PATCH \
             -H "Authorization: token $GITHUB_TOKEN" \
