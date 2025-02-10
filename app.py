@@ -13,21 +13,22 @@ from config import config
 from core.emby_api import EmbyApi, EmbyRouterAPI
 from services import UserService
 
+
 async def create_database_if_not_exists() -> None:
     """创建数据库。"""
     engine_without_db = create_async_engine(
-        f"mysql+asyncmy://{config.db_user}:{config.
-db_pass}@{config.db_host}:{config.db_port}/",
+        f"mysql+asyncmy://{config.db_user}:{config.db_pass}@{config.db_host}:{config.db_port}/",
         echo=True,
     )
     async with engine_without_db.begin() as conn:
         await conn.execute(text(f"CREATE DATABASE IF NOT EXISTS {config.db_name}"))
     await engine_without_db.dispose()
-    
+
 
 async def _init_db() -> None:
     """初始化数据库连接并创建表。"""
     await create_database_if_not_exists()
+
     db_client = SQLAlchemyManager(
         host=config.db_host,
         port=config.db_port,
@@ -37,9 +38,10 @@ async def _init_db() -> None:
     )
     db_client.init_mysql_engine()
     DBManager.init_db_client(db_client)
+
     async with DBManager.connection() as conn:
         await conn.run_sync(BaseOrmTable.metadata.create_all)
-        
+
 
 def _init_logger() -> None:
     """初始化日志记录器。"""
@@ -49,9 +51,9 @@ def _init_logger() -> None:
         level=config.log_level,
         filename="default.log",
     )
-    
 
-def _init_tz() -> None: 
+
+def _init_tz() -> None:
     """初始化时区设置。"""
     if config.timezone:
         try:
@@ -61,7 +63,7 @@ def _init_tz() -> None:
         except pytz.UnknownTimeZoneError:
             logging.error(f"无效的时区配置: {config.timezone}，请检查 config.timezone 设置。")
 
-            
+
 async def setup_bot() -> BotClient:
     """初始化并启动 Bot 客户端。"""
     bot_client = BotClient(
@@ -71,8 +73,8 @@ async def setup_bot() -> BotClient:
         name="emby_bot",
     )
     await bot_client.start()
-    return bot_clien
-  
+    return bot_client
+
 
 async def fetch_group_members(bot_client: BotClient) -> None:
     """获取群组成员并更新配置。"""
@@ -81,14 +83,14 @@ async def fetch_group_members(bot_client: BotClient) -> None:
         for telegram_id in group_members:
             config.group_members[telegram_id] = group_members[telegram_id]
 
-            
+
 async def main() -> None:
     """主函数，初始化并运行 Bot。"""
     _init_logger()
     _init_tz()
 
     now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    logging.info(f"程序启动时间: {now)
+    logging.info(f"程序启动时间: {now}")
 
     await _init_db()
     logging.info("数据库初始化完成。")
@@ -121,6 +123,7 @@ async def main() -> None:
     finally:
         await bot_client.stop()
         logging.info("Bot 已停止。")
+
 
 if __name__ == "__main__":
     asyncio.run(main())
