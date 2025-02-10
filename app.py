@@ -56,8 +56,7 @@ async def main():
         db_client.init_mysql_engine()
         DBManager.init_db_client(db_client)
         async with DBManager.connection() as conn:
-            query = str(BaseOrmTable.metadata.create_all(bind=conn.engine))
-            logger.info(f"SQL Query: {query}, Context: Creating tables")
+            logger.info("Context: Creating tables")
             await conn.run_sync(BaseOrmTable.metadata.create_all)
 
 
