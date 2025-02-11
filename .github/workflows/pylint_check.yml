@@ -1,0 +1,57 @@
+name: Pylint 检查
+
+on:
+  pull_request:
+    types: [ opened, synchronize, reopened ]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v2
+
+      - name: 设置 Python 环境
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: 安装依赖
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then
+            echo "喵～ 检测到 requirements.txt ，开始安装依赖包喵～"
+            pip install -r requirements.txt
+          fi
+
+      - name: 安装 Pylint
+        run: pip install pylint
+
+      - name: 执行 Pylint 检查
+        id: pylint_run
+        run: |
+          pylint . > pylint-report.txt
+
+      - name: 检查报告并发表评论
+        if: always()
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('pylint-report.txt', 'utf8').trim();
+            if (!report) {
+              console.log("喵～ 没有发现 Pylint 错误哦！");
+              return;
+            }
+            const pr = context.payload.pull_request;
+            if (!pr) {
+              console.log("喵～ 没有获取到 PR 信息哦！");
+              return;
+            }
+            const author = pr.user.login;
+            const commentBody = `@${author} 亲亲，喵喵检测到以下 Pylint 警告或错误，请主人检查并修改喵～\n\n\`\`\`\n${report}\n\`\`\``;
+            await github.rest.issues.createComment({
+              ...context.repo,
+              issue_number: pr.number,
+              body: commentBody
+            });
