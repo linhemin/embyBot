@@ -13,18 +13,15 @@ ENV TZ=Asia/Shanghai \
 # 设置默认工作目录
 WORKDIR ${WORKDIR}
 
-#复制uv文件到工作目录中
-COPY pyproject.toml ${WORKDIR}
-
-COPY requirements.txt ${WORKDIR}
+#复制uv lockfile到工作目录中
+COPY uv.lock ${WORKDIR}
 
 # 安装必要的环境
-
-RUN apk add --no-cache --virtual .build-deps gcc git musl-dev curl  \
-  && curl -LsSf https://astral.sh/uv/install.sh | sh \
+RUN apk add --no-cache --virtual .build-deps gcc git musl-dev \
+  && wget -qO- https://astral.sh/uv/install.sh | sh \
   && source /root/.local/bin/env \
   && uv sync \
-  && uv add -r ${WORKDIR}/requirements.txt \
+  && uv cache clean \
   && apk del --purge .build-deps \
   && rm -rf /tmp/* /root/.cache /var/cache/apk/*
 
