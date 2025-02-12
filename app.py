@@ -51,12 +51,23 @@ async def _init_db() -> None:
 
 def _init_logger() -> None:
     """初始化日志记录器。"""
-    logging.basicConfig(
-        format="%(levelname)s [%(asctime)s] %(name)s - %(message)s",
+    handler = logging.StreamHandler()  # 输出到终端
+    formatter = logging.Formatter(
+        fmt="%(levelname)s [%(asctime)s] %(name)s - %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
-        level=config.log_level,
-        filename="default.log",
     )
+    handler.setFormatter(formatter)
+
+    # 添加流处理器
+    logger.addHandler(handler)
+
+    # 设置日志级别
+    logger.setLevel(config.log_level)
+
+    # 如果你需要将日志写入文件，可以继续保持原有的文件配置：
+    file_handler = logging.FileHandler("default.log")
+    file_handler.setFormatter(formatter)
+    logger.addHandler(file_handler)
 
 
 def _init_tz() -> None:
