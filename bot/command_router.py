@@ -1,10 +1,10 @@
 from pyrogram import filters
 
 from bot import BotClient
-from bot.admin_command import AdminCommandHandler
-from bot.event_command import EventHandler
+from bot.command.admin_command import AdminCommandHandler
+from bot.command.event_command import EventHandler
 from bot.filters import user_in_group_on_filter, emby_user_on_filter, admin_user_on_filter
-from bot.user_command import UserCommandHandler
+from bot.command.user_command import UserCommandHandler
 
 
 def setup_command_routes(bot_client: BotClient, user_command_handler: UserCommandHandler,
