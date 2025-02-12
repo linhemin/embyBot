@@ -22,8 +22,8 @@ class InviteCode(BaseOrmTableWithTS):
     telegram_id: Mapped[int] = mapped_column(BigInteger, index=True, nullable=False)
     code_type: Mapped[InviteCodeType] = mapped_column(Enum(InviteCodeType), nullable=False)
     is_used: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-    used_time: Mapped[int] = mapped_column(BigInteger, nullable=True)
-    used_user_id: Mapped[int] = mapped_column(BigInteger, nullable=True, index=True)
+    used_time: Mapped[int] = mapped_column(BigInteger, default=None, nullable=True)
+    used_user_id: Mapped[int] = mapped_column(BigInteger, default=None, nullable=True, index=True)
 
     def __repr__(self):
         return (f"<InviteCode(code={self.code}, telegram_id={self.telegram_id}, "
