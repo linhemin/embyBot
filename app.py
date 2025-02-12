@@ -119,7 +119,6 @@ async def main() -> None:
         logger.info("群组成员信息已更新。")
 
         # 设置命令并进入空闲状态
-        command_handler.setup_commands()
         logger.info("命令处理器设置完成，Bot 进入运行状态。")
         await bot_client.idle()
 
