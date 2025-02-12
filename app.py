@@ -51,12 +51,24 @@ async def _init_db() -> None:
 
 def _init_logger() -> None:
     """初始化日志记录器。"""
-    logging.basicConfig(
-        format="%(levelname)s [%(asctime)s] %(name)s - %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
-        level=config.log_level,
-        filename="default.log",
+    formatter = logging.Formatter(
+        "%(levelname)s [%(asctime)s] %(name)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
     )
+
+    # 创建 logger 并设置级别
+    logger_i = logging.getLogger()
+    logger_i.setLevel(config.log_level)
+
+    # 文件处理器，记录到 default.log
+    file_handler = logging.FileHandler("default.log")
+    file_handler.setFormatter(formatter)
+    logger_i.addHandler(file_handler)
+
+    # 控制台处理器，打印到终端
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(formatter)
+    logger_i.addHandler(console_handler)
+
 
 def _init_tz() -> None:
     """初始化时区设置。"""

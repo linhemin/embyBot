@@ -7,7 +7,6 @@ from pyrogram.types import Message
 from bot import BotClient
 from bot.message_helper import get_user_telegram_id
 from bot.utils import reply_html, send_error, parse_args, ensure_args
-from config import config
 from services import UserService
 
 logger = logging.getLogger(__name__)
@@ -120,20 +119,6 @@ class AdminCommandHandler:
                 await reply_html(message, "❌ 解禁失败，请稍后重试。")
         except Exception as e:
             await send_error(message, e, prefix="解禁失败")
-
-    async def group_member_change_handler(self, clent, message: Message):
-        """
-        群组成员变动处理器。
-        """
-        if message.left_chat_member:
-            left_member_id = message.left_chat_member.id
-            left_member = await self.user_service.must_get_user(left_member_id)
-            if left_member.has_emby_account() and not left_member.is_emby_baned() and not left_member.is_whitelist:
-                await self.user_service.emby_ban(message.left_chat_member.id, "用户已退出群组")
-            config.group_members.pop(message.left_chat_member.id, None)
-        if message.new_chat_members:
-            for new_member in message.new_chat_members:
-                config.group_members[new_member.id] = new_member
 
     async def register_until(self, message: Message):
         """

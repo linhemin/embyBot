@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime
 
-from pyrogram.types import Message, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
+from pyrogram.types import Message, InlineKeyboardButton, InlineKeyboardMarkup
 
 from bot import BotClient
 from bot.message_helper import get_user_telegram_id
@@ -152,33 +152,6 @@ class UserCommandHandler:
                 await reply_html(message, "❌ 创建用户失败，请稍后重试。")
         except Exception as e:
             await send_error(message, e, prefix="创建用户失败")
-
-    async def handle_callback_query(self, client, callback_query: CallbackQuery):
-        """
-        回调按钮事件统一处理，如切换线路。
-        """
-        data = callback_query.data.split('_')
-        if data[0] == 'SELECTROUTE':
-            index = data[1]
-            try:
-                if not config.router_list:
-                    await callback_query.answer("尚未加载线路列表，请稍后重试")
-                    return
-
-                selected_router = next((r for r in config.router_list if r['index'] == index), None)
-                if not selected_router:
-                    await callback_query.answer("线路不存在")
-                    return
-
-                await self.user_service.update_user_router(callback_query.from_user.id, index)
-                await callback_query.answer("线路已更新")
-                await callback_query.message.edit(
-                    f"已选择 <b>{selected_router['name']}</b>\n"
-                    "生效可能会有 30 秒延迟，请耐心等候。"
-                )
-            except Exception as e:
-                await callback_query.answer(f"操作失败：{str(e)}", show_alert=True)
-                logger.error(f"Callback query failed: {e}", exc_info=True)
 
     async def reset_emby_password(self, message: Message):
         """
