@@ -58,15 +58,18 @@ def _init_logger() -> None:
         filename="default.log",
     )
 
+
 def _init_tz() -> None:
     """初始化时区设置。"""
     if config.timezone:
         try:
             timezone = pytz.timezone(config.timezone)
-            now = datetime.now(timezone).strftime('%Y-%m-%d %H:%M:%S')
+            now = datetime.now(timezone).strftime("%Y-%m-%d %H:%M:%S")
             logger.info(f"时区已设置为: {config.timezone}，当前时间: {now}")
         except pytz.UnknownTimeZoneError:
-            logger.error(f"无效的时区配置: {config.timezone}，请检查 config.timezone 设置。")
+            logger.error(
+                f"无效的时区配置: {config.timezone}，请检查 config.timezone 设置。"
+            )
 
 
 async def setup_bot() -> BotClient:
@@ -94,7 +97,7 @@ async def main() -> None:
     _init_logger()
     _init_tz()
 
-    now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     logger.info(f"程序启动时间: {now}")
 
     await _init_db()
