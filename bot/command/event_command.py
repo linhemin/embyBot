@@ -4,15 +4,17 @@ from pyrogram.types import Message, CallbackQuery
 
 from bot import BotClient
 from config import config
-from services import UserService
+from services import UserRouter, InviteCodeService, ServiceApi
 
 logger = logging.getLogger(__name__)
 
 
 class EventHandler:
-    def __init__(self, bot_client: BotClient, user_service: UserService):
+    def __init__(self, bot_client: BotClient, user_router: UserRouter, invite_code_service: InviteCodeService, emby_api: ServiceApi):
         self.bot_client = bot_client
-        self.user_service = user_service
+        self.user_router = user_router
+        self.invite_code_service = invite_code_service
+        self.emby_api = emby_api
         self.code_to_message_id = {}
         logger.info("EventHandler initialized")
 
@@ -36,7 +38,7 @@ class EventHandler:
                     await callback_query.answer("线路不存在")
                     return
 
-                await self.user_service.update_user_router(
+                await self.user_router.update_user_router(
                     callback_query.from_user.id, index)
                 await callback_query.answer("线路已更新")
                 await callback_query.message.edit(
@@ -54,11 +56,11 @@ class EventHandler:
         """
         if message.left_chat_member:
             left_member_id = message.left_chat_member.id
-            left_member = await self.user_service.must_get_user(left_member_id)
+            left_member = await self.invite_code_service.must_get_user(left_member_id)
             if (left_member.has_emby_account()
                     and not left_member.is_emby_baned()
                     and not left_member.is_whitelist):
-                await self.user_service.emby_ban(message.left_chat_member.id,
+                await self.emby_api.emby_ban(message.left_chat_member.id,
                                                  "用户已退出群组")
             config.group_members.pop(message.left_chat_member.id, None)
         if message.new_chat_members:
