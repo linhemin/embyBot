@@ -51,9 +51,24 @@ async def _init_db() -> None:
 
 def _init_logger() -> None:
     """初始化日志记录器。"""
+    handler = logging.StreamHandler()  # 输出到终端
     formatter = logging.Formatter(
-        "%(levelname)s [%(asctime)s] %(name)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
+        fmt="%(levelname)s [%(asctime)s] %(name)s - %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
     )
+    handler.setFormatter(formatter)
+
+    # 添加流处理器
+    logger.addHandler(handler)
+
+    # 设置日志级别
+    logger.setLevel(config.log_level)
+
+    # 如果你需要将日志写入文件，可以继续保持原有的文件配置：
+    file_handler = logging.FileHandler("default.log")
+    file_handler.setFormatter(formatter)
+    logger.addHandler(file_handler)
+
 
     # 创建 logger 并设置级别
     logger_i = logging.getLogger()
@@ -75,10 +90,12 @@ def _init_tz() -> None:
     if config.timezone:
         try:
             timezone = pytz.timezone(config.timezone)
-            now = datetime.now(timezone).strftime('%Y-%m-%d %H:%M:%S')
+            now = datetime.now(timezone).strftime("%Y-%m-%d %H:%M:%S")
             logger.info(f"时区已设置为: {config.timezone}，当前时间: {now}")
         except pytz.UnknownTimeZoneError:
-            logger.error(f"无效的时区配置: {config.timezone}，请检查 config.timezone 设置。")
+            logger.error(
+                f"无效的时区配置: {config.timezone}，请检查 config.timezone 设置。"
+            )
 
 
 async def setup_bot() -> BotClient:
@@ -106,7 +123,7 @@ async def main() -> None:
     _init_logger()
     _init_tz()
 
-    now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     logger.info(f"程序启动时间: {now}")
 
     await _init_db()

@@ -5,6 +5,7 @@ from bot.bot_client import BotClient
 from bot.command_router import setup_command_routes
 from bot.command.event_command import EventHandler
 from bot.command.user_command import UserCommandHandler
+
 from services import UserService
 
 logger = logging.getLogger(__name__)
