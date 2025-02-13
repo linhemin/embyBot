@@ -15,8 +15,11 @@ class CommandHandler:
         self.bot_client = bot_client
         self.user_service = user_service
         self.code_to_message_id = {}
-        self.user_command_handler = UserCommandHandler(bot_client, user_service)
-        self.admin_command_handler = AdminCommandHandler(bot_client, user_service)
+        self.user_command_handler = UserCommandHandler(bot_client,
+                                                       user_service)
+        self.admin_command_handler = AdminCommandHandler(bot_client,
+                                                         user_service)
         self.event_handler = EventHandler(bot_client, user_service)
-        setup_command_routes(bot_client, self.user_command_handler, self.admin_command_handler, self.event_handler)
+        setup_command_routes(bot_client, self.user_command_handler,
+                             self.admin_command_handler, self.event_handler)
         logger.info("CommandHandler initialized")

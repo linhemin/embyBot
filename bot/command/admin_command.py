@@ -5,7 +5,8 @@ from pyrogram.enums import ParseMode
 from pyrogram.types import Message
 
 from bot import BotClient
-from bot.utils import with_parsed_args, reply_html, send_error, with_ensure_args
+from bot.utils import with_parsed_args, reply_html, send_error, \
+    with_ensure_args
 from bot.utils.message_helper import get_user_telegram_id
 from services import UserService
 
@@ -29,7 +30,8 @@ class AdminCommandHandler:
             try:
                 num = int(args[0])
             except ValueError:
-                return await reply_html(message, "❌ 请输入有效数量 /new_code [整数]")
+                return await reply_html(message,
+                                        "❌ 请输入有效数量 /new_code [整数]")
 
         num = min(num, 20)
         try:
@@ -57,7 +59,8 @@ class AdminCommandHandler:
 
         num = min(num, 20)
         try:
-            code_list = await self.user_service.create_whitelist_code(message.from_user.id, num)
+            code_list = await self.user_service.create_whitelist_code(
+                message.from_user.id, num)
             await self.send_code(code_list, message, whitelist=True)
         except Exception as e:
             await send_error(message, e, prefix="创建白名单邀请码失败")
@@ -68,7 +71,8 @@ class AdminCommandHandler:
         else:
             base_text = "📌 邀请码：\n点击复制👉"
         for code_obj in code_list:
-            message_text = f"{base_text}<code>{code_obj.code}</code>"  # 每次用 base_text 重置消息文本哦～
+            # 每次用 base_text 重置消息文本哦～
+            message_text = f"{base_text}<code>{code_obj.code}</code>"
             if message.reply_to_message is not None:
                 await self.bot_client.client.send_message(
                     chat_id=message.from_user.id,
@@ -86,7 +90,9 @@ class AdminCommandHandler:
                     message,
                     message_text
                 )
-                self.code_to_message_id[code_obj.code] = (message.chat.id, msg.id)
+                self.code_to_message_id[code_obj.code] = (
+                    message.chat.id, msg.id
+                )
 
     @with_parsed_args
     async def ban_emby(self, message: Message, args: list[str]):
@@ -96,9 +102,11 @@ class AdminCommandHandler:
         reason = args[0] if args else "管理员禁用"
 
         operator_id = message.from_user.id
-        telegram_id = await get_user_telegram_id(self.bot_client.client, message)
+        telegram_id = await get_user_telegram_id(self.bot_client.client,
+                                                 message)
         try:
-            if await self.user_service.emby_ban(telegram_id, reason, operator_id):
+            if await self.user_service.emby_ban(telegram_id, reason,
+                                                operator_id):
                 await reply_html(
                     message,
                     f"✅ 已禁用用户 <code>{telegram_id}</code> 的Emby账号"
@@ -113,7 +121,8 @@ class AdminCommandHandler:
         /unban_emby (群里需回复某人或手动指定)
         """
         operator_id = message.from_user.id
-        telegram_id = await get_user_telegram_id(self.bot_client.client, message)
+        telegram_id = await get_user_telegram_id(self.bot_client.client,
+                                                 message)
         try:
             if await self.user_service.emby_unban(telegram_id, operator_id):
                 await reply_html(

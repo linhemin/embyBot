@@ -4,7 +4,8 @@ from datetime import datetime
 from pyrogram.types import Message, InlineKeyboardButton, InlineKeyboardMarkup
 
 from bot import BotClient
-from bot.utils import reply_html, send_error, parse_iso8601_to_normal_date, with_parsed_args, with_ensure_args
+from bot.utils import reply_html, send_error, parse_iso8601_to_normal_date, \
+    with_parsed_args, with_ensure_args
 from bot.utils.message_helper import get_user_telegram_id
 from config import config
 from models.invite_code_model import InviteCodeType
@@ -33,9 +34,15 @@ class UserCommandHandler:
             await reply_html(
                 message,
                 (
-                    f"🎬 电影数量：<code>{count_data.get('MovieCount', 0)}</code>\n"
-                    f"📽️ 剧集数量：<code>{count_data.get('SeriesCount', 0)}</code>\n"
-                    f"🎞️ 总集数：<code>{count_data.get('EpisodeCount', 0)}</code>\n"
+                    f"🎬 电影数量：<code>"
+                    f"{count_data.get('MovieCount', 0)}"
+                    f"</code>\n"
+                    f"📽️ 剧集数量：<code>"
+                    f"{count_data.get('SeriesCount', 0)}"
+                    f"</code>\n"
+                    f"🎞️ 总集数：<code>"
+                    f"{count_data.get('EpisodeCount', 0)}"
+                    f"</code>\n"
                 )
             )
         except Exception as e:
@@ -46,13 +53,17 @@ class UserCommandHandler:
         /info
         如果是私聊，查看自己信息；如果群里回复某人，则查看对方信息
         """
-        telegram_id = await get_user_telegram_id(self.bot_client.client, message)
+        telegram_id = await get_user_telegram_id(self.bot_client.client,
+                                                 message)
         try:
             user, emby_info = await self.user_service.emby_info(telegram_id)
-            last_active = (parse_iso8601_to_normal_date(emby_info.get("LastActivityDate"))
-                           if emby_info.get("LastActivityDate") else "无")
-            date_created = parse_iso8601_to_normal_date(emby_info.get("DateCreated", ""))
-            ban_status = "正常" if (user.ban_time is None or user.ban_time == 0) else "已禁用"
+            last_active = (
+                parse_iso8601_to_normal_date(emby_info.get("LastActivityDate"))
+                if emby_info.get("LastActivityDate") else "无")
+            date_created = parse_iso8601_to_normal_date(
+                emby_info.get("DateCreated", ""))
+            ban_status = "正常" if (
+                    user.ban_time is None or user.ban_time == 0) else "已禁用"
 
             reply_text = (
                 f"👤 <b>用户信息</b>：\n"
@@ -65,7 +76,8 @@ class UserCommandHandler:
             )
 
             if user.ban_time and user.ban_time > 0:
-                ban_time = datetime.fromtimestamp(user.ban_time).strftime('%Y-%m-%d %H:%M:%S')
+                ban_time = datetime.fromtimestamp(user.ban_time).strftime(
+                    '%Y-%m-%d %H:%M:%S')
                 reply_text += f"• 被ban时间：<code>{ban_time}</code>\n"
                 if user.reason:
                     reply_text += f"• 被ban原因：<code>{user.reason}</code>\n"
@@ -88,9 +100,11 @@ class UserCommandHandler:
                 return await reply_html(message, "❌ 邀请码使用失败")
             # 根据类型给出不同的回复
             if used_code.code_type == InviteCodeType.REGISTER:
-                await reply_html(message, "✅ 邀请码使用成功，您已获得创建账号资格")
+                await reply_html(message,
+                                 "✅ 邀请码使用成功，您已获得创建账号资格")
             else:
-                await reply_html(message, "✅ 邀请码使用成功，您已获得白名单资格")
+                await reply_html(message,
+                                 "✅ 邀请码使用成功，您已获得白名单资格")
 
             # 如果该邀请码在bot中记录了消息，需要删除
             if self.code_to_message_id.get(code):
@@ -129,7 +143,8 @@ class UserCommandHandler:
                 index = router.get('index')
                 name = router.get('name')
                 # 已选线路高亮
-                button_text = f"🔵 {name}" if index == user_router_index else f"⚪ {name}"
+                button_text = f"🔵 {name}" if index == user_router_index \
+                    else f"⚪ {name}"
                 (
                     message_buttons
                     .append(
@@ -176,8 +191,8 @@ class UserCommandHandler:
         try:
             if await (
                     self.user_service
-                            .reset_password(
-                        message.from_user.id, default_password
+                        .reset_password(
+                            message.from_user.id, default_password
                     )
             ):
                 await reply_html(

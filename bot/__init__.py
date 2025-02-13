@@ -1,6 +1,7 @@
 import logging
 
-from bot.utils.filters import user_in_group_on_filter, admin_user_on_filter, emby_user_on_filter
+from bot.utils.filters import user_in_group_on_filter, admin_user_on_filter, \
+    emby_user_on_filter
 from .bot_client import BotClient
 from .command import CommandHandler
 from .utils import parse_iso8601_to_normal_date, parse_timestamp_to_normal_date

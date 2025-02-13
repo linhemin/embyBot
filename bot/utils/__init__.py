@@ -18,7 +18,8 @@ def parse_iso8601(datetime_str: str):
         return dt
     except Exception as e:
         logger.error(
-            f"Error parsing ISO8601 datetime string: {datetime_str}: {e}", exc_info=True
+            f"Error parsing ISO8601 datetime string: {datetime_str}: {e}",
+            exc_info=True
         )
         return None
 
@@ -43,7 +44,8 @@ def parse_timestamp_to_normal_date(timestamp: int):
         logger.debug(f"Parsed timestamp: {timestamp}")
         return dt.strftime("%Y-%m-%d %H:%M:%S")
     except Exception as e:
-        logger.error(f"Error parsing timestamp {timestamp}: {e}", exc_info=True)
+        logger.error(f"Error parsing timestamp {timestamp}: {e}",
+                     exc_info=True)
         return None
 
 
@@ -91,7 +93,8 @@ def with_ensure_args(min_len: int, usage: str):
                 message_obj = args[1]
                 command_args = args[2]
             if len(command_args) < min_len:
-                await reply_html(message_obj, f"参数不足，请参考用法：\n<code>{usage}</code>")
+                await reply_html(message_obj,
+                                 f"参数不足，请参考用法：\n<code>{usage}</code>")
                 return
             return await func(*args, **kwargs)
 
@@ -100,7 +103,8 @@ def with_ensure_args(min_len: int, usage: str):
     return decorator
 
 
-async def send_error(message: Message, error: Exception, prefix: str = "操作失败"):
+async def send_error(message: Message, error: Exception,
+                     prefix: str = "操作失败"):
     """
     统一的异常捕获后回复方式。
     """
