@@ -5,8 +5,8 @@ from pyrogram.enums import ParseMode
 from pyrogram.types import Message
 
 from bot import BotClient
-from bot.message_helper import get_user_telegram_id
-from bot.utils import reply_html, send_error, with_parsed_args, with_ensure_args
+from bot.utils import with_parsed_args, reply_html, send_error, with_ensure_args
+from bot.utils.message_helper import get_user_telegram_id
 from services import UserService
 
 logger = logging.getLogger(__name__)

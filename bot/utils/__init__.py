@@ -45,12 +45,14 @@ def parse_timestamp_to_normal_date(timestamp: int):
     except Exception as e:
         logger.error(f"Error parsing timestamp {timestamp}: {e}", exc_info=True)
         return None
-      
+
+
 async def reply_html(message: Message, text: str, **kwargs):
     """
     统一回复方法，使用 HTML parse_mode。
     """
     return await message.reply(text, parse_mode=ParseMode.HTML, **kwargs)
+
 
 def with_parsed_args(func):
     """
@@ -58,12 +60,15 @@ def with_parsed_args(func):
     这个装饰器会从消息的文本中提取以空格分割的参数（除第一个命令外），
     并将解析后的参数列表传递给被装饰的函数 喵～
     """
+
     @functools.wraps(func)
     async def wrapper(self, message: Message, *args, **kwargs):
         parts = message.text.strip().split(" ")
         parsed_args = parts[1:] if len(parts) > 1 else []
         return await func(self, message, parsed_args, *args, **kwargs)
+
     return wrapper
+
 
 def with_ensure_args(min_len: int, usage: str):
     """
@@ -73,6 +78,7 @@ def with_ensure_args(min_len: int, usage: str):
       min_len - 所需最小参数数量
       usage   - 命令的正确用法示例
     """
+
     def decorator(func):
         @functools.wraps(func)
         async def wrapper(*args, **kwargs):
@@ -88,8 +94,11 @@ def with_ensure_args(min_len: int, usage: str):
                 await reply_html(message_obj, f"参数不足，请参考用法：\n<code>{usage}</code>")
                 return
             return await func(*args, **kwargs)
+
         return wrapper
+
     return decorator
+
 
 async def send_error(message: Message, error: Exception, prefix: str = "操作失败"):
     """

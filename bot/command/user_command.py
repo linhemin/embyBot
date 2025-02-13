@@ -4,8 +4,8 @@ from datetime import datetime
 from pyrogram.types import Message, InlineKeyboardButton, InlineKeyboardMarkup
 
 from bot import BotClient
-from bot.message_helper import get_user_telegram_id
 from bot.utils import reply_html, send_error, parse_iso8601_to_normal_date, with_parsed_args, with_ensure_args
+from bot.utils.message_helper import get_user_telegram_id
 from config import config
 from models.invite_code_model import InviteCodeType
 from services import UserService

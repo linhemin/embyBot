@@ -3,12 +3,12 @@ from pyrogram import filters
 from bot import BotClient
 from bot.command.admin_command import AdminCommandHandler
 from bot.command.event_command import EventHandler
-from bot.filters import user_in_group_on_filter, emby_user_on_filter, admin_user_on_filter
 from bot.command.user_command import UserCommandHandler
+from bot.utils.filters import user_in_group_on_filter, emby_user_on_filter, admin_user_on_filter
 
 
 def setup_command_routes(bot_client: BotClient, user_command_handler: UserCommandHandler,
-                           admin_command_handler: AdminCommandHandler, event_handler: EventHandler):
+                         admin_command_handler: AdminCommandHandler, event_handler: EventHandler):
     # 定义命令配置，每项为 (命令, 过滤器, 处理函数)
     command_definitions = [
         (["help", "start"], filters.private, user_command_handler.help_command),
@@ -16,8 +16,10 @@ def setup_command_routes(bot_client: BotClient, user_command_handler: UserComman
         ("info", user_in_group_on_filter, user_command_handler.info),
         ("use_code", filters.private & user_in_group_on_filter, user_command_handler.use_code),
         ("create", filters.private & user_in_group_on_filter, user_command_handler.create_user),
-        ("reset_emby_password", filters.private & user_in_group_on_filter & emby_user_on_filter, user_command_handler.reset_emby_password),
-        ("select_line", filters.private & user_in_group_on_filter & emby_user_on_filter, user_command_handler.select_line),
+        ("reset_emby_password", filters.private & user_in_group_on_filter & emby_user_on_filter,
+         user_command_handler.reset_emby_password),
+        ("select_line", filters.private & user_in_group_on_filter & emby_user_on_filter,
+         user_command_handler.select_line),
         ("new_code", admin_user_on_filter, admin_command_handler.new_code),
         ("new_whitelist_code", admin_user_on_filter, admin_command_handler.new_whitelist_code),
         ("ban_emby", admin_user_on_filter, admin_command_handler.ban_emby),
@@ -37,14 +39,18 @@ def setup_command_routes(bot_client: BotClient, user_command_handler: UserComman
                 @bot_client.client.on_message(filters.private & filters.command(cmd_) & f_)
                 async def handler(_, message):
                     await func_(message)
+
                 return handler
+
             make_handler()
         else:
             def make_handler(func_=func, f_=f, cmd_=cmd):
                 @bot_client.client.on_message(filters.command(cmd_) & f_)
                 async def handler(_, message):
                     await func_(message)
+
                 return handler
+
             make_handler()
 
     # 注册回调查询处理器

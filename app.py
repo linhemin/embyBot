@@ -8,7 +8,7 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from bot.bot_client import BotClient
-from bot.commands import CommandHandler
+from bot import CommandHandler
 from config import config
 from core.emby_api import EmbyApi, EmbyRouterAPI
 from services import UserService
