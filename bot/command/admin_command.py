@@ -6,7 +6,7 @@ from pyrogram.types import Message
 
 from bot import BotClient
 from bot.message_helper import get_user_telegram_id
-from bot.utils import reply_html, send_error, parse_args, ensure_args
+from bot.utils import reply_html, send_error, ensure_args, with_parsed_args
 from services import UserService
 
 logger = logging.getLogger(__name__)
@@ -19,11 +19,11 @@ class AdminCommandHandler:
         self.code_to_message_id = {}
         logger.info("AdminCommandHandler initialized")
 
-    async def new_code(self, message: Message):
+    @with_parsed_args
+    async def new_code(self, message: Message, args: list[str]):
         """
         /new_code [数量]
         """
-        args = parse_args(message)
         num = 1
         if args:
             try:
@@ -33,22 +33,27 @@ class AdminCommandHandler:
 
         num = min(num, 20)
         try:
-            code_list = await self.user_service.create_invite_code(message.from_user.id, num)
+            code_list = await (
+                self.user_service
+                .create_invite_code(message.from_user.id, num)
+            )
             await self.send_code(code_list, message)
         except Exception as e:
             await send_error(message, e, prefix="创建邀请码失败")
 
-    async def new_whitelist_code(self, message: Message):
+    @with_parsed_args
+    async def new_whitelist_code(self, message: Message, args: list[str]):
         """
         /new_whitelist_code [数量]
         """
-        args = parse_args(message)
         num = 1
         if args:
             try:
                 num = int(args[0])
             except ValueError:
-                return await reply_html(message, "❌ 请输入有效数量 /new_whitelist_code [整数]")
+                return await reply_html(
+                    message,
+                    "❌ 请输入有效数量 /new_whitelist_code [整数]")
 
         num = min(num, 20)
         try:
@@ -83,11 +88,11 @@ class AdminCommandHandler:
                 )
                 self.code_to_message_id[code_obj.code] = (message.chat.id, msg.id)
 
-    async def ban_emby(self, message: Message):
+    @with_parsed_args
+    async def ban_emby(self, message: Message, args: list[str]):
         """
         /ban_emby [原因] (群里需回复某人或手动指定)
         """
-        args = parse_args(message)
         reason = args[0] if args else "管理员禁用"
 
         operator_id = message.from_user.id
@@ -120,13 +125,17 @@ class AdminCommandHandler:
         except Exception as e:
             await send_error(message, e, prefix="解禁失败")
 
-    async def register_until(self, message: Message):
+    @with_parsed_args
+    async def register_until(self, message: Message, args: list[str]):
         """
         /register_until <时间: YYYY-MM-DD HH:MM:SS>
         限时开放注册
         """
-        args = parse_args(message)
-        if not await ensure_args(message, args, 2, "/register_until 2023-10-01 12:00:00"):
+        if not await ensure_args(
+                message,
+                args,
+                2,
+                "/register_until 2023-10-01 12:00:00"):
             return
 
         time_str = " ".join(args)
@@ -136,23 +145,38 @@ class AdminCommandHandler:
             if time < now:
                 return await reply_html(message, "❌ 时间必须晚于当前时间")
 
-            await self.user_service.set_emby_config(message.from_user.id, register_public_time=int(time.timestamp()))
-            await reply_html(message, f"✅ 已开放注册，截止时间：<code>{time_str}</code>")
+            await self.user_service.set_emby_config(
+                message.from_user.id,
+                register_public_time=int(time.timestamp())
+            )
+            await reply_html(
+                message,
+                f"✅ 已开放注册，截止时间：<code>{time_str}</code>"
+            )
         except Exception as e:
             await send_error(message, e, prefix="开放注册失败")
 
-    async def register_amount(self, message: Message):
+    @with_parsed_args
+    async def register_amount(self, message: Message, args: list[str]):
         """
         /register_amount <人数>
         开放指定数量的注册名额
         """
-        args = parse_args(message)
-        if not await ensure_args(message, args, 1, "/register_amount <人数>"):
+        if not await ensure_args(message,
+                                 args,
+                                 1,
+                                 "/register_amount <人数>"):
             return
 
         try:
             amount = int(args[0])
-            await self.user_service.set_emby_config(message.from_user.id, register_public_user=amount)
-            await reply_html(message, f"✅ 已开放注册，名额：<code>{amount}</code>")
+            await self.user_service.set_emby_config(
+                message.from_user.id,
+                register_public_user=amount
+            )
+            await reply_html(
+                message,
+                f"✅ 已开放注册，名额：<code>{amount}</code>"
+            )
         except Exception as e:
             await send_error(message, e, prefix="开放注册失败")

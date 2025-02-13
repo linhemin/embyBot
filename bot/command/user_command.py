@@ -5,7 +5,7 @@ from pyrogram.types import Message, InlineKeyboardButton, InlineKeyboardMarkup
 
 from bot import BotClient
 from bot.message_helper import get_user_telegram_id
-from bot.utils import reply_html, send_error, parse_iso8601_to_normal_date, parse_args, ensure_args
+from bot.utils import reply_html, send_error, parse_iso8601_to_normal_date, ensure_args, with_parsed_args
 from config import config
 from models.invite_code_model import InviteCodeType
 from services import UserService
@@ -74,11 +74,11 @@ class UserCommandHandler:
         except Exception as e:
             await send_error(message, e, prefix="查询失败")
 
-    async def use_code(self, message: Message):
+    @with_parsed_args
+    async def use_code(self, message: Message, args: list[str]):
         """
         /use_code <邀请码>
         """
-        args = parse_args(message)
         if not await ensure_args(message, args, 1, "/use_code <邀请码>"):
             return
 
@@ -97,7 +97,12 @@ class UserCommandHandler:
             # 如果该邀请码在bot中记录了消息，需要删除
             if self.code_to_message_id.get(code):
                 code_to_message_id = self.code_to_message_id[code]
-                await self.bot_client.client.delete_messages(code_to_message_id[0], code_to_message_id[1])
+                await (
+                    self.bot_client
+                    .client.delete_messages(
+                        code_to_message_id[0],
+                        code_to_message_id[1])
+                )
                 del self.code_to_message_id[code]
         except Exception as e:
             await send_error(message, e, prefix="邀请码使用失败")
@@ -109,7 +114,10 @@ class UserCommandHandler:
         """
         try:
             telegram_id = message.from_user.id
-            router_list = config.router_list or await self.user_service.get_router_list(telegram_id)
+            router_list = (
+                    config.router_list or
+                    await self.user_service.get_router_list(telegram_id)
+            )
             # 缓存到 config 中，减少重复获取
             if router_list and not config.router_list:
                 config.router_list = router_list
@@ -124,25 +132,36 @@ class UserCommandHandler:
                 name = router.get('name')
                 # 已选线路高亮
                 button_text = f"🔵 {name}" if index == user_router_index else f"⚪ {name}"
-                message_buttons.append([InlineKeyboardButton(button_text, callback_data=f"SELECTROUTE_{index}")])
+                (
+                    message_buttons
+                    .append(
+                        [InlineKeyboardButton(
+                            button_text,
+                            callback_data=f"SELECTROUTE_{index}")]
+                    )
+                )
 
             keyboard = InlineKeyboardMarkup(message_buttons)
             await reply_html(message, message_text, reply_markup=keyboard)
         except Exception as e:
             await send_error(message, e, prefix="查询失败")
 
-    async def create_user(self, message: Message):
+    @with_parsed_args
+    async def create_user(self, message: Message, args: list[str]):
         """
         /create <用户名>
         """
-        args = parse_args(message)
         if not await ensure_args(message, args, 1, "/create <用户名>"):
             return
 
         emby_name = args[0]
         try:
             default_password = self.user_service.gen_default_passwd()
-            user = await self.user_service.emby_create_user(message.from_user.id, emby_name, default_password)
+            user = await (
+                self.user_service.emby_create_user(
+                    message.from_user.id, emby_name, default_password
+                )
+            )
             if user and user.has_emby_account():
                 await reply_html(
                     message,
@@ -159,7 +178,12 @@ class UserCommandHandler:
         """
         default_password = self.user_service.gen_default_passwd()
         try:
-            if await self.user_service.reset_password(message.from_user.id, default_password):
+            if await (
+                    self.user_service
+                            .reset_password(
+                        message.from_user.id, default_password
+                    )
+            ):
                 await reply_html(
                     message,
                     f"✅ 密码重置成功。\n新密码：<code>{default_password}</code>"

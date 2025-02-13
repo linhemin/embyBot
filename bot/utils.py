@@ -1,3 +1,4 @@
+import functools
 import logging
 from datetime import datetime
 
@@ -51,14 +52,13 @@ async def reply_html(message: Message, text: str, **kwargs):
     """
     return await message.reply(text, parse_mode=ParseMode.HTML, **kwargs)
 
-
-def parse_args(message: Message) -> list[str]:
-    """
-    将用户输入拆分为命令 + 参数列表，如：
-    '/create testuser' -> ['testuser']
-    """
-    parts = message.text.strip().split(" ")
-    return parts[1:] if len(parts) > 1 else []
+def with_parsed_args(func):
+    @functools.wraps(func)
+    async def wrapper(self, message: Message, *args, **kwargs):
+        parts = message.text.strip().split(" ")
+        parsed_args = parts[1:] if len(parts) > 1 else []
+        return await func(self, message, parsed_args, *args, **kwargs)
+    return wrapper
 
 
 async def ensure_args(message: Message, args: list, min_len: int, usage: str):
