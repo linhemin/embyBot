@@ -53,6 +53,11 @@ async def reply_html(message: Message, text: str, **kwargs):
     return await message.reply(text, parse_mode=ParseMode.HTML, **kwargs)
 
 def with_parsed_args(func):
+    """
+    用于自动解析消息文本参数的装饰器 喵～。
+    这个装饰器会从消息的文本中提取以空格分割的参数（除第一个命令外），
+    并将解析后的参数列表传递给被装饰的函数 喵～
+    """
     @functools.wraps(func)
     async def wrapper(self, message: Message, *args, **kwargs):
         parts = message.text.strip().split(" ")
@@ -60,16 +65,31 @@ def with_parsed_args(func):
         return await func(self, message, parsed_args, *args, **kwargs)
     return wrapper
 
-
-async def ensure_args(message: Message, args: list, min_len: int, usage: str):
+def with_ensure_args(min_len: int, usage: str):
     """
-    确保命令行参数长度足够，不足则回复用法说明。
+    用于确保命令参数数量足够的装饰器 喵～。
+    如果传入的参数数量少于要求的最小值，则自动回复提示信息，并终止函数的执行 喵～
+    参数：
+      min_len - 所需最小参数数量
+      usage   - 命令的正确用法示例
     """
-    if len(args) < min_len:
-        await reply_html(message, f"参数不足，请参考用法：\n<code>{usage}</code>")
-        return False
-    return True
-
+    def decorator(func):
+        @functools.wraps(func)
+        async def wrapper(*args, **kwargs):
+            # 判断是否为方法：
+            # 如果第一个参数是 Message，则视为普通函数，否则视为类方法（第一个参数为 self）
+            if args and isinstance(args[0], Message):
+                message_obj = args[0]
+                command_args = args[1]
+            else:
+                message_obj = args[1]
+                command_args = args[2]
+            if len(command_args) < min_len:
+                await reply_html(message_obj, f"参数不足，请参考用法：\n<code>{usage}</code>")
+                return
+            return await func(*args, **kwargs)
+        return wrapper
+    return decorator
 
 async def send_error(message: Message, error: Exception, prefix: str = "操作失败"):
     """

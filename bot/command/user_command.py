@@ -5,7 +5,7 @@ from pyrogram.types import Message, InlineKeyboardButton, InlineKeyboardMarkup
 
 from bot import BotClient
 from bot.message_helper import get_user_telegram_id
-from bot.utils import reply_html, send_error, parse_iso8601_to_normal_date, ensure_args, with_parsed_args
+from bot.utils import reply_html, send_error, parse_iso8601_to_normal_date, with_parsed_args, with_ensure_args
 from config import config
 from models.invite_code_model import InviteCodeType
 from services import UserService
@@ -75,13 +75,11 @@ class UserCommandHandler:
             await send_error(message, e, prefix="查询失败")
 
     @with_parsed_args
+    @with_ensure_args(1, "/use_code <邀请码>")
     async def use_code(self, message: Message, args: list[str]):
         """
         /use_code <邀请码>
         """
-        if not await ensure_args(message, args, 1, "/use_code <邀请码>"):
-            return
-
         code = args[0]
         telegram_id = message.from_user.id
         try:
@@ -147,13 +145,11 @@ class UserCommandHandler:
             await send_error(message, e, prefix="查询失败")
 
     @with_parsed_args
+    @with_ensure_args(1, "/create <用户名>")
     async def create_user(self, message: Message, args: list[str]):
         """
         /create <用户名>
         """
-        if not await ensure_args(message, args, 1, "/create <用户名>"):
-            return
-
         emby_name = args[0]
         try:
             default_password = self.user_service.gen_default_passwd()

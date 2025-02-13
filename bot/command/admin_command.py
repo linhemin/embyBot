@@ -6,7 +6,7 @@ from pyrogram.types import Message
 
 from bot import BotClient
 from bot.message_helper import get_user_telegram_id
-from bot.utils import reply_html, send_error, ensure_args, with_parsed_args
+from bot.utils import reply_html, send_error, with_parsed_args, with_ensure_args
 from services import UserService
 
 logger = logging.getLogger(__name__)
@@ -126,18 +126,12 @@ class AdminCommandHandler:
             await send_error(message, e, prefix="解禁失败")
 
     @with_parsed_args
+    @with_ensure_args(2, "/register_until 2023-10-01 12:00:00")
     async def register_until(self, message: Message, args: list[str]):
         """
         /register_until <时间: YYYY-MM-DD HH:MM:SS>
         限时开放注册
         """
-        if not await ensure_args(
-                message,
-                args,
-                2,
-                "/register_until 2023-10-01 12:00:00"):
-            return
-
         time_str = " ".join(args)
         try:
             time = datetime.strptime(time_str, "%Y-%m-%d %H:%M:%S")
@@ -157,17 +151,12 @@ class AdminCommandHandler:
             await send_error(message, e, prefix="开放注册失败")
 
     @with_parsed_args
+    @with_ensure_args(1, "/register_amount <人数>")
     async def register_amount(self, message: Message, args: list[str]):
         """
         /register_amount <人数>
         开放指定数量的注册名额
         """
-        if not await ensure_args(message,
-                                 args,
-                                 1,
-                                 "/register_amount <人数>"):
-            return
-
         try:
             amount = int(args[0])
             await self.user_service.set_emby_config(
