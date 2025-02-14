@@ -8,15 +8,17 @@ from bot import BotClient
 from bot.utils import with_parsed_args, reply_html, send_error, \
     with_ensure_args
 from bot.utils.message_helper import get_user_telegram_id
-from services import UserService
+from services import ConfigService, InviteCodeService, ServiceApi
 
 logger = logging.getLogger(__name__)
 
 
 class AdminCommandHandler:
-    def __init__(self, bot_client: BotClient, user_service: UserService):
+    def __init__(self, bot_client: BotClient, config_service: ConfigService, invite_code_service: InviteCodeService, emby_api: ServiceApi):
         self.bot_client = bot_client
-        self.user_service = user_service
+        self.config_service = config_service
+        self.invite_code_service = invite_code_service
+        self.emby_api = emby_api
         self.code_to_message_id = {}
         logger.info("AdminCommandHandler initialized")
 
@@ -36,7 +38,7 @@ class AdminCommandHandler:
         num = min(num, 20)
         try:
             code_list = await (
-                self.user_service
+                self.invite_code_service
                 .create_invite_code(message.from_user.id, num)
             )
             await self.send_code(code_list, message)
@@ -59,7 +61,7 @@ class AdminCommandHandler:
 
         num = min(num, 20)
         try:
-            code_list = await self.user_service.create_whitelist_code(
+            code_list = await self.invite_code_service.create_whitelist_code(
                 message.from_user.id, num)
             await self.send_code(code_list, message, whitelist=True)
         except Exception as e:
@@ -105,7 +107,7 @@ class AdminCommandHandler:
         telegram_id = await get_user_telegram_id(self.bot_client.client,
                                                  message)
         try:
-            if await self.user_service.emby_ban(telegram_id, reason,
+            if await self.emby_api.emby_ban(telegram_id, reason,
                                                 operator_id):
                 await reply_html(
                     message,
@@ -124,7 +126,7 @@ class AdminCommandHandler:
         telegram_id = await get_user_telegram_id(self.bot_client.client,
                                                  message)
         try:
-            if await self.user_service.emby_unban(telegram_id, operator_id):
+            if await self.emby_api.emby_unban(telegram_id, operator_id):
                 await reply_html(
                     message,
                     f"✅ 已解禁用户 <code>{telegram_id}</code> 的Emby账号"
@@ -148,7 +150,7 @@ class AdminCommandHandler:
             if time < now:
                 return await reply_html(message, "❌ 时间必须晚于当前时间")
 
-            await self.user_service.set_emby_config(
+            await self.config_service.set_emby_config(
                 message.from_user.id,
                 register_public_time=int(time.timestamp())
             )
@@ -168,7 +170,7 @@ class AdminCommandHandler:
         """
         try:
             amount = int(args[0])
-            await self.user_service.set_emby_config(
+            await self.config_service.set_emby_config(
                 message.from_user.id,
                 register_public_user=amount
             )

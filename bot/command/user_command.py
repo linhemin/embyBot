@@ -9,15 +9,17 @@ from bot.utils import reply_html, send_error, parse_iso8601_to_normal_date, \
 from bot.utils.message_helper import get_user_telegram_id
 from config import config
 from models.invite_code_model import InviteCodeType
-from services import UserService
+from services import InviteCodeService, UserRouter, ServiceApi
 
 logger = logging.getLogger(__name__)
 
 
 class UserCommandHandler:
-    def __init__(self, bot_client: BotClient, user_service: UserService):
+    def __init__(self, bot_client: BotClient, user_router: UserRouter, invite_code_service: InviteCodeService, emby_api: ServiceApi):
         self.bot_client = bot_client
-        self.user_service = user_service
+        self.user_router = user_router
+        self.invite_code_service = invite_code_service
+        self.emby_api = emby_api
         self.code_to_message_id = {}
         logger.info("UserCommandHandler initialized")
 
@@ -27,7 +29,7 @@ class UserCommandHandler:
         查询服务器内片子数量
         """
         try:
-            count_data = self.user_service.emby_count()
+            count_data = self.emby_api.emby_count()
             if not count_data:
                 return await reply_html(message, "❌ 查询失败：无法获取数据")
 
@@ -56,7 +58,7 @@ class UserCommandHandler:
         telegram_id = await get_user_telegram_id(self.bot_client.client,
                                                  message)
         try:
-            user, emby_info = await self.user_service.emby_info(telegram_id)
+            user, emby_info = await self.emby_api.emby_info(telegram_id)
             last_active = (
                 parse_iso8601_to_normal_date(emby_info.get("LastActivityDate"))
                 if emby_info.get("LastActivityDate") else "无")
@@ -95,7 +97,7 @@ class UserCommandHandler:
         code = args[0]
         telegram_id = message.from_user.id
         try:
-            used_code = await self.user_service.redeem_code(telegram_id, code)
+            used_code = await self.invite_code_service.redeem_code(telegram_id, code)
             if not used_code:
                 return await reply_html(message, "❌ 邀请码使用失败")
             # 根据类型给出不同的回复
@@ -128,13 +130,13 @@ class UserCommandHandler:
             telegram_id = message.from_user.id
             router_list = (
                     config.router_list or
-                    await self.user_service.get_router_list(telegram_id)
+                    await self.user_router.get_router_list(telegram_id)
             )
             # 缓存到 config 中，减少重复获取
             if router_list and not config.router_list:
                 config.router_list = router_list
 
-            user_router = await self.user_service.get_user_router(telegram_id)
+            user_router = await self.user_router.get_user_router(telegram_id)
             user_router_index = user_router.get('index', '')
             message_text = f"当前线路：<code>{user_router_index}</code>\n请选择线路："
             message_buttons = []
@@ -167,9 +169,9 @@ class UserCommandHandler:
         """
         emby_name = args[0]
         try:
-            default_password = self.user_service.gen_default_passwd()
+            default_password = self.invite_code_service.gen_default_passwd()
             user = await (
-                self.user_service.emby_create_user(
+                self.emby_api.emby_create_user(
                     message.from_user.id, emby_name, default_password
                 )
             )
@@ -187,10 +189,10 @@ class UserCommandHandler:
         """
         /reset_emby_password
         """
-        default_password = self.user_service.gen_default_passwd()
+        default_password = self.invite_code_service.gen_default_passwd()
         try:
             if await (
-                    self.user_service
+                    self.emby_api
                         .reset_password(
                             message.from_user.id, default_password
                     )
@@ -219,7 +221,7 @@ class UserCommandHandler:
             "/count - 查看服务器内影片数量\n"
             "/help - 显示本帮助\n"
         )
-        if await self.user_service.is_admin(message.from_user.id):
+        if await self.invite_code_service.is_admin(message.from_user.id):
             help_message += (
                 "\n<b>管理命令：</b>\n"
                 "/new_code [数量] - 创建新的普通邀请码\n"
